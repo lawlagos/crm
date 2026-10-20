@@ -28,11 +28,12 @@ O usuário autorizou a publicação em `https://lawlagos.github.io/crm/`, com Go
 - [x] Referência Finanças da Casa lida, sem alterações.
 - [x] Navegador verificado: GitHub e Google sem login; solicitação de login enviada ao usuário enquanto a preparação continua.
 - [x] Domínio e testes portados.
-- [x] Entrada estática e login implementados e inspecionados; OAuth real ainda sem aceite.
+- [x] Entrada estática e login implementados e inspecionados; OAuth real confirmado pelo proprietário.
 - [x] Servidor Apps Script e persistência atômica testados em harness; upload/implantação lidos de volta na API Google.
 - [x] Publicação Pages concluída e conferida: HTTP 200 e botão Google real renderizado.
 - [x] Autorização/configuração do servidor pelo proprietário: execução concluída às 16:24:07 de 20/10/2026, 18 abas conferidas e acesso anônimo recusado.
-- [ ] Login e gravação reais pela interface, com sincronização em dois aparelhos.
+- [x] Login e gravação reais pela interface: usuário confirmou e tarefa/recibo correspondentes foram conferidos na planilha.
+- [ ] Sincronização real entre dois aparelhos.
 - [ ] Notificação entregue em aparelho autorizado.
 
 Não marcar itens como concluídos por existir código ou configuração. Registrar comandos, resultados e bloqueios concretos no relatório da migração.
