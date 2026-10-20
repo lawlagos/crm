@@ -18,6 +18,16 @@ test('cloud starts with stable areas, no fake records and pure queries',()=>{
   expect(JSON.stringify(state)).toBe(before);
   expect(state.tables.settings.every(row=>row.id===row.key)).toBe(true);
 });
+
+test('November appointment remains in its Sao Paulo day and respects explicit front filters',()=>{
+  const {cmd,query}=fixture();
+  const event=cmd('createEvent',{title:'Appointment fixture',areaId:agency,kind:'reuniao',startsAt:'2026-11-10T10:00:00.000Z',endsAt:'2026-11-10T10:30:00.000Z'});
+  expect(query('/api/calendar?from=2026-11-10&to=2026-11-10')).toMatchObject({total:1,items:[expect.objectContaining({id:event.id})]});
+  expect(query(`/api/calendar?from=2026-11-10&to=2026-11-10&areaId=${agency}`)).toMatchObject({total:1});
+  expect(query(`/api/calendar?from=2026-11-10&to=2026-11-10&areaId=${jiu}`)).toMatchObject({total:0});
+  expect(query('/api/calendar?from=2026-11-09&to=2026-11-09')).toMatchObject({total:0});
+  expect(query(`/api/calendar/${event.id}`)).toMatchObject({startsAt:'2026-11-10T10:00:00.000Z',status:'agendado'});
+});
 test('task/project patches preserve content, enforce versions and keep area relationships',()=>{
   const {cmd}=fixture(); const project=cmd('createProject',{name:'Entrega',areaId:jiu,objective:'Objetivo'});
   const task=cmd('createTask',{title:'Preparar',description:'Descrição',priority:'alta',tags:['entrega'],checklist:[{id:'passo',text:'Conferir',done:true}],areaId:jiu,projectId:project.id});

@@ -163,6 +163,10 @@ Primitives comuns: Button, Field, Select, ContactCombobox, DateField, TimeField,
 
 Select e combobox authored, com popup alinhado e acessível; DateField em pt-BR com digitação dd/mm/aaaa e calendário compartilhado. TimeField em HH:mm com validação e teclado apropriado. Aparência e conteúdo desses popups pertencem ao app. Calendário de agenda usa adapter FullCalendar Standard tematizado pelos mesmos tokens.
 
+Revisão de 20/10: a agenda abre no mês, com dias selecionáveis e indicadores dos compromissos. O painel do dia mantém horários, títulos e acesso à edição legíveis também no celular. Hoje recebe destaque discreto, diferente do dia selecionado; os seletores DateField repetem esse tratamento e usam São Paulo. Salvar um compromisso conduz à data registrada. Essa direção atende à referência expressa do usuário ao Google Agenda, preservando a identidade da Central.
+
+O progresso das tarefas usa contagem, percentual e barra em petróleo, compartilhados entre ficha, lista, quadro e Hoje. O checklist tem linhas clicáveis e feedback de gravação junto aos itens. Preferência expressa do usuário: concluir a tarefa continua sendo uma ação manual; marcar o último item não altera o status. Conclusão manual com itens pendentes permanece visível e não falsifica a barra.
+
 Feedback visual em até 150ms quando há resposta local; animação discreta de 120–180ms, respeitando reduced-motion. Mover um cartão comunica origem/destino sem efeito decorativo. Scrollbars visíveis, com thumb muted, track background e hover primário; forced-colors respeita o sistema.
 
 ## Do's and Don'ts

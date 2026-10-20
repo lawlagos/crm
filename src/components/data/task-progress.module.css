@@ -1,0 +1,32 @@
+.progress{width:100%;min-width:0;color:var(--color-muted);font-size:14px;line-height:1.4}
+.compact{max-width:360px;margin-top:var(--space-sm);font-size:12px}
+.compact .progressLabel{gap:4px;flex-wrap:wrap}
+.compact .progressLabel>span{white-space:nowrap}
+.compact .progressLabel>strong{margin-left:auto}
+.progressLabel{display:flex;justify-content:space-between;gap:var(--space-md);margin-bottom:6px;font-variant-numeric:tabular-nums}
+.progressLabel strong{color:var(--color-primary);font-weight:600;flex-shrink:0}
+.track{height:6px;border-radius:4px;overflow:hidden;background:var(--color-border)}
+.track>span{display:block;height:100%;border-radius:inherit;background:var(--color-primary);transition:width 160ms ease}
+.manualNote{margin:var(--space-sm) 0 0;color:var(--color-warning);font-size:12px;overflow-wrap:anywhere}
+.checklistSection{margin-top:var(--space-xl);padding-top:var(--space-xl);border-top:1px solid var(--color-border)}
+.checklistHeading{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-md);margin-bottom:var(--space-md)}
+.checklistSection .checklistHeading h2{margin:0}
+.checklistHint{font-size:13px;color:var(--color-muted);margin:0}
+.items{display:grid;gap:var(--space-xs);border:0;padding:0;margin:var(--space-lg) 0 0;min-width:0}
+.item{display:flex;align-items:center;gap:var(--space-md);min-height:48px;padding:var(--space-sm) var(--space-md);border:1px solid transparent;border-radius:var(--radius-control);cursor:pointer;line-height:1.4}
+.item:hover{background:var(--color-background);border-color:var(--color-border)}
+.item:focus-within{outline:2px solid var(--color-primary);outline-offset:2px}
+.item input{width:20px;height:20px;min-height:20px;flex:0 0 20px;margin:0;accent-color:var(--color-primary);cursor:inherit}
+.itemText{flex:1;min-width:0;overflow-wrap:anywhere}
+.itemDone .itemText{color:var(--color-muted);text-decoration:line-through;text-decoration-thickness:1px;text-underline-offset:3px}
+.items:disabled .item{cursor:not-allowed}
+.items:disabled .item:hover{border-color:transparent;background:transparent}
+.savingItem{width:18px;height:18px;flex-shrink:0;color:var(--color-primary)}
+.saveStatus{min-height:24px;margin:var(--space-sm) 0 0;font-size:13px;color:var(--color-muted)}
+.error{margin-top:var(--space-md);padding:var(--space-md);border:1px solid var(--color-border);border-radius:var(--radius-control);background:var(--color-background);color:var(--color-text);font-size:14px}
+.error p{margin:0 0 var(--space-sm)}
+.recoveryActions{display:flex;flex-wrap:wrap;gap:var(--space-sm)}
+.recoveryActions button{font-size:13px}
+@media(max-width:600px){.checklistHeading{align-items:flex-start;flex-direction:column;gap:var(--space-xs)}.item{padding-left:var(--space-xs);padding-right:var(--space-xs)}.recoveryActions{flex-direction:column;align-items:stretch}}
+@media(prefers-reduced-motion:reduce){.track>span{transition:none}}
+@media(forced-colors:active){.track{border:1px solid CanvasText}.track>span{background:Highlight}}

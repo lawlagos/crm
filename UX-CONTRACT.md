@@ -1,6 +1,6 @@
 # Contrato de experiência — Central
 
-Status: implementação em validação local. Intenção visual em [DESIGN.md](DESIGN.md); regras de negócio na [especificação](docs/superpowers/specs/2026-10-19-central-design.md).
+Status: aplicação local e versão publicada em GitHub Pages com backend Apps Script/Google Sheets. Intenção visual em [DESIGN.md](DESIGN.md); regras de negócio na [especificação](docs/superpowers/specs/2026-10-19-central-design.md). A revisão de 20/10 mantém as regras do produto nas duas versões; referências a registros locais descrevem lançamentos internos, sem movimentação bancária.
 
 ## Donos dos comportamentos
 
@@ -53,6 +53,17 @@ Botões **Salvar**, **Cancelar** e **Voltar** têm resultado previsível. Cancel
 - Seleção global de frente não altera registro já aberto. Em formulário pendente, trocar frente exige resolver o rascunho. Vínculos de outra frente não são oferecidos silenciosamente.
 - O seletor e o Mapa das frentes acompanham as frentes ativas. Ao arquivar a frente selecionada, voltar para Todas com aviso; o histórico permanece acessível pelos filtros pertinentes.
 - Atualização em segundo plano não apaga formulário nem reorganiza o item sob o ponteiro enquanto estiver sendo editado.
+- Criar um cliente mantém acesso direto ao cadastro salvo mesmo quando ele ainda não pertence à frente filtrada. Não criar vínculos fictícios nem apagar filtros para fazê-lo aparecer.
+
+## Agenda e progresso das tarefas
+
+- Agenda inicial mensal, com destaque de hoje, seleção de dia e indicadores dos compromissos; semana e lista continuam disponíveis. O painel do dia mostra horário e título, sem depender apenas de cor ou de hover.
+- Ao salvar um compromisso, mostrar sua data, inclusive após confirmar conflito. Filtros ativos ficam explícitos e oferecem caminho para todas as frentes; o formulário respeita os vínculos de frente/projeto/tarefa.
+- Alterar a data inicial acompanha a data final quando ambas coincidiam. Preservar término multidia escolhido manualmente. Datas e horas usam São Paulo, mesmo com navegador em outro fuso.
+- DateField marca hoje discretamente, distingue seleção e foco, reabre no mês do valor atual e permite teclado entre meses e retorno a Hoje.
+- Checklist pode ser marcado diretamente na ficha, inclusive após conclusão manual. Contagem e barra refletem itens realmente marcados: 1/10 = 10%. Sem checklist, tarefa aberta = 0/1, concluída = 1/1.
+- Concluir/reabrir não modifica os itens. Marcar o último item não conclui automaticamente. Exibir itens pendentes quando a tarefa foi concluída manualmente.
+- Gravação por versão; conflito não sobrescreve outros itens. Recuperação explícita relê o checklist e reaplica somente o item tentado. Resultado incerto reutiliza a mesma operação. Offline não cria fila de gravação.
 
 ## Estados obrigatórios
 
@@ -66,7 +77,7 @@ Botões **Salvar**, **Cancelar** e **Voltar** têm resultado previsível. Cancel
 | Validação | erro em texto junto ao campo; foco no primeiro inválido; conservar os valores |
 | Resultado de escrita incerto | “Não foi possível confirmar. Verificar resultado”; reutilizar a mesma operação |
 | Conflito de versão | “Este registro mudou em outra tela”; não sobrescrever; permitir copiar rascunho e recarregar |
-| Servidor indisponível | “Conecte-se à rede do computador e mantenha o servidor em execução”; desabilitar confirmação de gravações |
+| Servidor indisponível | Versão local orienta conexão ao servidor; versão Pages orienta reconexão à internet. Desabilitar confirmação de gravações sem rede |
 | Rascunho não salvo | aviso discreto e proteção de saída; não prometer persistência após fechar |
 | Rota inexistente | 404 do app com volta para Hoje, sem mensagem técnica |
 
@@ -90,8 +101,8 @@ Parcelas de venda explicam por que valor/vínculos e cancelamento individual est
 
 ## Celular e PWA
 
-Mesmo conjunto de dados e regras do desktop. No celular, lista é padrão para tarefas e agenda; Kanban e calendário continuam acessíveis. Barra inferior respeita safe area e teclado virtual. Não usar rolagem horizontal da página; tabelas transformam-se em linhas/cartões com ações alcançáveis.
+Mesmo conjunto de dados e regras do desktop. No celular, lista é padrão para tarefas; a agenda mensal oferece painel do dia e acesso à lista. Kanban continua acessível. Barra inferior respeita safe area e teclado virtual. Não usar rolagem horizontal da página; tabelas transformam-se em linhas/cartões com ações alcançáveis.
 
-Sem gravação offline, notificações push ou promessa de sincronização com app fechado. Ao perder rede com formulário aberto, manter o que foi digitado em memória e orientar reconexão. Tela offline estática não exibe dados financeiros ou contatos em cache.
+Sem gravação offline. A versão publicada tem infraestrutura de push opcional mediante permissão e inscrição do navegador; a entrega em aparelho físico exige validação própria e não é comprovada por emulação. Ao perder rede com formulário aberto, manter o que foi digitado em memória e orientar reconexão. Tela offline estática não exibe dados financeiros ou contatos em cache.
 
 Atualização de PWA avisa e aguarda formulário resolvido. Instruções de instalação variam por plataforma; esconder botão programático quando não suportado e oferecer instrução correta, sem botão morto.
