@@ -34,3 +34,11 @@ Repositório, Pages, nova planilha e novo script foram criados. Endereços no [g
 Código foi enviado e lido de volta pela API Google, confirmando arquivo Central e função configurarCentral. Após upload, o endpoint público ainda respondeu HTTP 403 antes da autorização/configuração do proprietário. Execução de configurarCentral solicitada ao usuário no editor. Não há evidência de login Google da Central, gravação real em dois aparelhos ou entrega push física até esse ponto.
 
 GitHub Pages publicado e conferido: `https://lawlagos.github.io/crm/` respondeu HTTP 200, título Central. A tela de entrada foi aberta no navegador e carregou o botão real do Google Identity com o cliente configurado. O workflow de publicação está disponível em https://github.com/lawlagos/crm/actions/runs/39480178375. Isso confirma a página pública; não comprova login, gravação ou push no servidor ainda pendente de autorização.
+
+## Configuração inicial: erro relatado e correção
+
+Em 20/10/2026, o proprietário executou configurarCentral e recebeu o erro genérico da chamada Sheets. A autorização do script passou a permitir acesso ao endpoint: GET público respondeu HTTP 200 e POST anônimo foi recusado com JSON UNAUTHORIZED/401 antes de ler dados.
+
+A planilha foi conferida via Drive: existe, tipo Google Sheets, não está na lixeira. O manifesto enviado não declarava o serviço avançado Sheets, necessário para ativar automaticamente a API no projeto Cloud padrão do Apps Script. Foi adicionada a dependência Sheets v4; essa configuração foi enviada e lida de volta pela API Google. Também foi encontrado SERVICE_DISABLED na sondagem REST pela credencial de implantação; essa credencial usa o projeto da ferramenta, portanto a sondagem isolada não comprova o motivo HTTP da execução interna original.
+
+A implantação @5 inclui a ativação e erros mais precisos: SERVICE_DISABLED é identificado sem expor o corpo da resposta; outras falhas informam apenas HTTP/status seguro. Novos testes cobrem configuração de planilha vazia, reexecução preservando dados e acionadores, e falha por serviço desativado. Os 45 testes cloud passaram, assim como ESLint, TypeScript e build Apps Script. A configuração real precisa ser reexecutada pelo proprietário para confirmar o resultado; ainda não foi declarada bem-sucedida.

@@ -15,6 +15,8 @@ O cliente OAuth público já usado no outro projeto pode ser reutilizado porque 
 
 No editor do novo script, selecione `configurarCentral` e execute com a conta autorizada. A função cria somente as abas que faltam, preserva os dados existentes e instala dois acionadores: materialização horária e lembrete diário por volta das 08h de São Paulo. O Google solicita consentimento para planilhas, chamadas externas, identidade e acionadores. Essa autorização deve ser feita pelo proprietário; login na ferramenta de implantação não equivale a autorizar a execução do script.
 
+O manifesto habilita o serviço avançado Sheets v4. No projeto Cloud padrão, o Google ativa a API correspondente ao salvar essa dependência. Ela é necessária também para as chamadas REST usadas nas gravações atômicas. Depois de uma atualização do script, recarregue o editor antes de executar a função; não é necessário colar código.
+
 Após autorizar, conferir o endpoint: GET mostra apenas nome e versão; POST sem sessão deve retornar JSON `UNAUTHORIZED`, sem dados. Entrar pela Central com Google e testar uma gravação em dois aparelhos. Não declarar esse aceite com base em mocks ou apenas no upload do código.
 
 ## Dados, sessões e gravações

@@ -18,7 +18,17 @@ function sheetsRequest(path:string,method:'get'|'post'='get',body?:unknown) {
   const response=UrlFetchApp.fetch('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(configuration.sheetId)+path,{
     method,headers:{Authorization:'Bearer '+ScriptApp.getOAuthToken()},contentType:'application/json',...(body===undefined?{}:{payload:JSON.stringify(body)}),muteHttpExceptions:true,
   });
-  if (response.getResponseCode()<200 || response.getResponseCode()>=300) throw new CloudError('UNAVAILABLE','Não foi possível confirmar a gravação na planilha. Verifique o resultado antes de repetir.',503);
+  const status=response.getResponseCode();
+  if (status<200 || status>=300) {
+    let failure:{status?:string;details?:{reason?:string;metadata?:{service?:string}}[]}={};
+    try { failure=JSON.parse(response.getContentText()).error ?? {}; } catch { /* Do not expose an unexpected provider response. */ }
+    if (failure.details?.some(detail=>detail.reason==='SERVICE_DISABLED' && detail.metadata?.service==='sheets.googleapis.com')) {
+      throw new CloudError('NOT_CONFIGURED','O serviço Google Sheets não está ativado no projeto do script. Atualize o projeto e execute configurarCentral novamente.',503);
+    }
+    const reason=/^[A-Z_]{1,64}$/.test(failure.status??'')?', '+failure.status:'';
+    const action=method==='get'?'consultar a planilha':'confirmar a gravação na planilha';
+    throw new CloudError('UNAVAILABLE',`Não foi possível ${action} (Google HTTP ${status}${reason}). Verifique o resultado antes de repetir.`,503);
+  }
   return JSON.parse(response.getContentText());
 }
 function snapshot():SheetSnapshot {
