@@ -40,6 +40,6 @@ Os testes da versão Pages usam transporte isolado e o domínio real em memória
 
 O filtro de prazos da agenda também foi corrigido: projeto e tarefa selecionados agora restringem os prazos exibidos, sem misturar tarefas de outros vínculos. O teste reproduziu três prazos indevidos antes da correção e passou com somente o prazo selecionado após o ajuste.
 
-Publicação pendente de conferência do workflow Pages e dos assets servidos. O backend Apps Script não precisa de nova implantação: as mudanças de produto desta rodada são no frontend.
+Publicado em [lawlagos.github.io/crm](https://lawlagos.github.io/crm/), commit `9693fca`. O [workflow Pages](https://github.com/lawlagos/crm/actions/runs/39494627348) concluiu build e deploy com sucesso. A conferência HTTP dos assets públicos confirmou a agenda mensal, o checklist, a conclusão manual e o acesso ao cadastro criado; a tela de entrada Google continuou restrita. O backend Apps Script não precisou de nova implantação: as mudanças de produto desta rodada são no frontend.
 
 Uma segunda leitura independente dos callbacks, checklist, conflitos e recuperação não encontrou defeitos materiais adicionais. Isso não representa cobertura exaustiva de todas as combinações de dados ou conformidade WCAG certificada. Toque, teclado virtual, push em aparelho físico e sincronização entre dois aparelhos não foram revalidados nesta rodada.

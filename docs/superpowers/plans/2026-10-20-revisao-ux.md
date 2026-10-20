@@ -33,4 +33,4 @@ Um escritor por arquivo; no máximo dois auxiliares. Reutilizar agentes por áre
 - [x] Checklist direto e progresso implementados.
 - [x] Outros módulos verificados e correções integradas.
 - [x] Revisão visual e validação técnica concluídas.
-- [ ] Publicação conferida.
+- [x] Publicação conferida: commit `9693fca`, workflow Pages `39494627348` com build/deploy bem-sucedidos e assets novos no endereço público. Evidências e limites no [relatório](../../reviews/2026-10-20-revisao-ux.md).
