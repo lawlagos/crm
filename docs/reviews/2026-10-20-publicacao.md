@@ -33,4 +33,4 @@ Repositório, Pages, nova planilha e novo script foram criados. Endereços no [g
 
 Código foi enviado e lido de volta pela API Google, confirmando arquivo Central e função configurarCentral. Após upload, o endpoint público ainda respondeu HTTP 403 antes da autorização/configuração do proprietário. Execução de configurarCentral solicitada ao usuário no editor. Não há evidência de login Google da Central, gravação real em dois aparelhos ou entrega push física até esse ponto.
 
-Publicação Pages e estado final do endpoint devem ser registrados após a verificação externa; testes com mocks não recebem aceite de produção.
+GitHub Pages publicado e conferido: `https://lawlagos.github.io/crm/` respondeu HTTP 200, título Central. A tela de entrada foi aberta no navegador e carregou o botão real do Google Identity com o cliente configurado. O workflow de publicação está disponível em https://github.com/lawlagos/crm/actions/runs/39480178375. Isso confirma a página pública; não comprova login, gravação ou push no servidor ainda pendente de autorização.

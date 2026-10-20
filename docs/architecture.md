@@ -1,5 +1,7 @@
 # Arquitetura
 
+> Atualização de destino em 20/10/2026: a Central também possui entrada estática em `/crm/`, Google OAuth, domínio Apps Script e persistência privada em Sheets. Contratos e implantação em [Central na nuvem](cloud-deployment.md), verificação em [relatório](reviews/2026-10-20-publicacao.md). O restante deste documento descreve a versão local preservada. Não aplicar a ausência de autenticação local ao endpoint público.
+
 Status: implementada em 20/10/2026. Regras de negócio: [especificação](superpowers/specs/2026-10-19-central-design.md); evidências e limites em [implementação](reviews/2026-10-20-implementacao.md). Escopo local sem autenticação preservado.
 
 ## 1. Um servidor, um banco
