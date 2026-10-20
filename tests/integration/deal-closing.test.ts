@@ -1,0 +1,35 @@
+import { afterEach, expect, test } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { initializeDatabase, openDatabase } from '@/db';
+import { domainHandlers } from '@/features/commands';
+const cleanup: (() => void)[] = []; afterEach(() => cleanup.splice(0).reverse().forEach(fn => fn()));
+test('sale split protects its agreement, reopens only after every installment is net zero and keeps delivery history', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'central-sale-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
+  await initializeDatabase(dir); const db = openDatabase(dir); cleanup.push(() => db.$client.close());
+  const cmd = (name: string, input: unknown, expectedVersion?: number) => {
+    expect(domainHandlers[name], name).toBeTypeOf('function');
+    return db.$client.transaction(() => domainHandlers[name](db, input, { operationId: crypto.randomUUID(), expectedVersion }))() as Record<string, unknown>;
+  };
+  const contact = cmd('createContact', { name: 'Pessoa teste' });
+  const opportunity = cmd('createOpportunity', { contactId: contact.id, areaId: '11111111-1111-4111-8111-111111111111', offerName: 'Consultoria' });
+  const closed = cmd('winOpportunity', { id: opportunity.id, amountCents: 10000, closedDate: '2026-10-20', installmentCount: 3, firstDueDate: '2026-10-20', createProject: true, templateKey: 'jiu' }, 1);
+  const installments = db.$client.prepare('SELECT * FROM receivables ORDER BY due_date').all() as Record<string, unknown>[];
+  expect(installments.map(row => row.amount_cents)).toEqual([3334,3333,3333]);
+  expect(db.$client.prepare('SELECT count(*) n FROM payments').get()).toEqual({ n: 0 });
+  expect(() => cmd('updateReceivable', { id: installments[0].id, amountCents: 4000 }, 1)).toThrow(/fechamento/i);
+  expect(() => cmd('cancelReceivable', { id: installments[0].id }, 1)).toThrow(/isolado/i);
+  expect(() => cmd('createReceivable', { areaId:'11111111-1111-4111-8111-111111111111',description:'Parcela adicional',opportunityId:opportunity.id,amountCents:1000,dueDate:'2026-10-20' })).toThrow(/fechamento/i);
+  const payment = cmd('recordPayment', { receivableId: installments[0].id, amountCents: 1000, effectiveDate: '2026-10-20', method: 'pix' }, 1);
+  expect(() => cmd('reopenOpportunity', { id: opportunity.id }, 2)).toThrow(/recebimento/i);
+  cmd('reversePayment', { paymentId: payment.id, amountCents: 1000, effectiveDate: '2026-10-20', reason: 'Correção' }, 2);
+  db.$client.exec("CREATE TRIGGER reject_one_cancel BEFORE UPDATE OF cancelled_at ON receivables WHEN OLD.amount_cents=3333 BEGIN SELECT RAISE(ABORT,'falha cancelamento'); END");
+  expect(() => cmd('reopenOpportunity', { id: opportunity.id }, 2)).toThrow(/falha/i);
+  expect(db.$client.prepare('SELECT reversed_at FROM deal_closures').get()).toEqual({ reversed_at: null });
+  db.$client.exec('DROP TRIGGER reject_one_cancel');
+  expect(cmd('reopenOpportunity', { id: opportunity.id }, 2)).toMatchObject({ stage: 'conversando', closedAt: null });
+  expect(db.$client.prepare('SELECT count(*) n FROM projects').get()).toEqual({ n: 1 });
+  expect(db.$client.prepare('SELECT count(*) n FROM receivables WHERE cancelled_at IS NOT NULL').get()).toEqual({ n: 3 });
+  expect(db.$client.prepare('SELECT project_id FROM deal_closures WHERE id=?').get(closed.closureId)).toEqual({ project_id: closed.projectId });
+});

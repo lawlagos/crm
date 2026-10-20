@@ -1,0 +1,11 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawn } from 'node:child_process';
+import { initializeDatabase } from '../src/db';
+const directory=mkdtempSync(join(tmpdir(),'central-e2e-'));
+await initializeDatabase(directory);
+const production=process.argv.includes('--production');const port=production?'3200':'3100';
+const child=spawn(process.execPath,['scripts/start-local.mjs',production?'start':'dev','--demo','--port',port],{stdio:'inherit',windowsHide:true,env:{...process.env,CENTRAL_DATA_DIR:directory,CENTRAL_DEMO:'1',PORT:port,CENTRAL_BUILD_DIR:production?'.next':'.next-test'}});
+for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>child.kill('SIGTERM'));
+child.on('exit',code=>{process.exitCode=code??0;});

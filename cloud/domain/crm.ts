@@ -1,0 +1,28 @@
+import{z}from'zod';
+import{area,business,dateSchema,get,insert,openOpportunity,parse,patch,pick,record,reference,rows,version,type Env,type Handler,type Row}from'./shared';
+import{contactCreate,contactPatch,interactionInput,opportunityCreate,opportunityPatch}from'./schemas';
+function normalize(value:Row):Row{
+  const result={...value};if('phone'in result){let phone=String(result.phone??'').replace(/\D/g,'');if(phone.length===10||phone.length===11)phone=`55${phone}`;if(phone&&!/^\d{10,15}$/.test(phone))business('Informe um telefone válido com DDI e DDD.');result.phone=phone||null;}
+  if('email'in result){const email=String(result.email??'').trim().toLowerCase();if(email&&!z.email().safeParse(email).success)business('Informe um e-mail válido.');result.email=email||null;}return result;
+}
+export function duplicateContacts(env:Env,input:Row,excludeId:unknown=''):Row[]{const value=normalize(input);return rows(env,'contacts').filter(row=>row.id!==excludeId&&((value.phone&&row.phone===value.phone)||(value.email&&row.email===value.email))).slice(0,20);}
+export const createContact:Handler=(env,input)=>{
+  const value=normalize(parse(contactCreate,input));const contact=insert(env,'contacts',record(env,{name:value.name,kind:value.kind,phone:value.phone??null,email:value.email??null,responsibleName:value.responsibleName??null,notes:value.notes,archivedAt:null}));return{...contact,duplicates:duplicateContacts(env,value,contact.id)};
+};
+export const updateContact:Handler=(env,input,meta)=>{const value=normalize(parse(contactPatch,input)),current=get(env,'contacts',value.id);version(current,meta);const row=patch(env,'contacts',current.id,pick(value,['name','kind','phone','email','responsibleName','notes']));return{...row,duplicates:duplicateContacts(env,{phone:row.phone,email:row.email},row.id)};};
+export const archiveContact:Handler=(env,input,meta)=>{const value=parse(z.object({id:z.string(),archived:z.boolean().default(true)}).strict(),input),current=get(env,'contacts',value.id);version(current,meta);return patch(env,'contacts',current.id,{archivedAt:value.archived?env.context.now:null});};
+function validateOpportunity(env:Env,value:Row){
+  area(env,value.areaId,true);const contact=get(env,'contacts',value.contactId);if(contact.archivedAt)business('O contato está arquivado.');const project=reference(env,'projects',value.projectId);
+  if(project&&(project.areaId!==value.areaId||project.status==='arquivado'))business('Escolha um projeto disponível na mesma frente.');if(Boolean(value.nextAction)!==Boolean(value.nextActionDate))business('Próxima ação e data devem ser informadas juntas.');
+}
+export const createOpportunity:Handler=(env,input)=>{const value=parse(opportunityCreate,input);const row=record(env,{...value,projectId:value.projectId??null,estimatedCents:value.estimatedCents??null,campaign:value.campaign??null,nextAction:value.nextAction??null,nextActionDate:value.nextActionDate??null,lastInteractionAt:null,closedAt:null,lossReason:null,lossNote:null,closeVersion:0});validateOpportunity(env,row);return insert(env,'opportunities',row);};
+export const updateOpportunity:Handler=(env,input,meta)=>{
+  const value=parse(opportunityPatch,input),current=get(env,'opportunities',value.id);version(current,meta);if(!openOpportunity(current))business('Reabra a oportunidade antes de editar.');
+  const changes=pick(value,['contactId','areaId','projectId','offerName','estimatedCents','source','campaign','stage','nextAction','nextActionDate','notes']);
+  if((('areaId'in changes&&changes.areaId!==current.areaId)||('contactId'in changes&&changes.contactId!==current.contactId))&&rows(env,'receivables').some(row=>row.opportunityId===current.id))business('Frente e contato estão protegidos pelos vínculos do histórico financeiro.');
+  validateOpportunity(env,{...current,...changes});return patch(env,'opportunities',current.id,changes);
+};
+export const recordInteractionAndNextAction:Handler=(env,input,meta)=>{const value=parse(interactionInput,input),opportunity=get(env,'opportunities',value.opportunityId);version(opportunity,meta);if(!openOpportunity(opportunity))business('Reabra a oportunidade antes de registrar o próximo passo.');insert(env,'interactions',{id:env.context.uuid(),contactId:opportunity.contactId,opportunityId:opportunity.id,occurredAt:value.occurredAt,channel:value.channel,type:value.type,summary:value.summary,createdAt:env.context.now});return patch(env,'opportunities',opportunity.id,{nextAction:value.nextAction,nextActionDate:value.nextActionDate,lastInteractionAt:value.occurredAt});};
+export const loseOpportunity:Handler=(env,input,meta)=>{const value=parse(z.object({id:z.string(),reason:z.enum(['sem_interesse','preco','momento','sem_retorno','outro']),note:z.string().max(2000).optional(),closedDate:dateSchema.optional()}).strict(),input),current=get(env,'opportunities',value.id);version(current,meta);if(!openOpportunity(current))business('Oportunidade já encerrada.');return patch(env,'opportunities',current.id,{stage:'perdido',lossReason:value.reason,lossNote:value.note??null,closedAt:value.closedDate??env.context.now,nextAction:null,nextActionDate:null});};
+export function linkCustomer(env:Env,contactId:unknown,areaId:unknown){area(env,areaId,true);if(!rows(env,'contact_relationships').some(row=>row.contactId===contactId&&row.areaId===areaId&&row.role==='cliente'))insert(env,'contact_relationships',{id:`${contactId}:${areaId}:cliente`,contactId,areaId,role:'cliente',createdAt:env.context.now});}
+export const crmHandlers={createContact,updateContact,archiveContact,createOpportunity,updateOpportunity,recordInteractionAndNextAction,loseOpportunity};

@@ -1,0 +1,6 @@
+export type Task = { id: string; title: string; areaId: string | null; projectId: string | null; status: string; priority: string; dueDate: string | null; description: string; estimateMinutes: number | null; waitingReason: string | null; reviewDate: string | null; tags: string[]; checklist: { id: string; text: string; done: boolean }[]; version: number; startedAt?: string | null; focusDate?: string | null };
+export type Project = { id: string; name: string; areaId: string; objective: string; status: string; targetDate: string | null; contactId: string | null; version: number; openTasks?: number };
+export type Page<T> = { items: T[]; total: number; page: number; pageSize: number };
+export const taskStatuses = [{ value: "entrada", label: "Caixa de entrada" }, { value: "a_fazer", label: "A fazer" }, { value: "em_andamento", label: "Em andamento" }, { value: "aguardando", label: "Aguardando" }, { value: "concluida", label: "Concluída" }, { value: "cancelada", label: "Cancelada" }];
+export const projectStatuses = [{ value: "ativo", label: "Ativo" }, { value: "pausado", label: "Pausado" }, { value: "concluido", label: "Concluído" }, { value: "arquivado", label: "Arquivado" }];
+export const priorities = [{ value: "baixa", label: "Baixa" }, { value: "normal", label: "Normal" }, { value: "alta", label: "Alta" }];

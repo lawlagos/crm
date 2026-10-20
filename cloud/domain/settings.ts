@@ -1,0 +1,18 @@
+import{z}from'zod';
+import{Temporal}from'temporal-polyfill';
+import{DomainError,business,get,insert,openOpportunity,openTask,parse,patch,pick,record,rows,version,type Env,type Handler,type Row}from'./shared';
+import{areaCreate,areaPatch,preferenceInput}from'./schemas';
+import{received}from'./finance';
+export const createArea:Handler=(env,input)=>{const value=parse(areaCreate,input);return insert(env,'business_areas',record(env,{...value,archivedAt:null}));};
+export const updateArea:Handler=(env,input,meta)=>{const value=parse(areaPatch,input),current=get(env,'business_areas',value.id);version(current,meta);return patch(env,'business_areas',current.id,pick(value,['name','colorKey']));};
+export const archiveArea:Handler=(env,input,meta)=>{
+  const value=parse(z.object({id:z.string()}).strict(),input),current=get(env,'business_areas',value.id);version(current,meta);const inArea=(row:Row)=>row.areaId===current.id;
+  const checks:[string,boolean][]=[['tarefas',rows(env,'tasks').some(row=>inArea(row)&&openTask(row))],['projetos',rows(env,'projects').some(row=>inArea(row)&&['ativo','pausado'].includes(String(row.status)))],['oportunidades',rows(env,'opportunities').some(row=>inArea(row)&&openOpportunity(row))],['saldo financeiro',rows(env,'receivables').some(row=>inArea(row)&&!row.cancelledAt&&Number(row.amountCents)>received(env,row.id))],['eventos futuros',rows(env,'calendar_events').some(row=>inArea(row)&&row.status==='agendado'&&Date.parse(String(row.endsAt))>Date.parse(env.context.now))],['séries ativas',rows(env,'recurrence_series').some(row=>inArea(row)&&row.active)]];
+  const blocked=checks.filter(([,active])=>active).map(([name])=>name);if(blocked.length)throw new DomainError('BUSINESS_RULE',`Resolva os vínculos antes de arquivar: ${blocked.join(', ')}.`,{dependencies:JSON.stringify(blocked)});return patch(env,'business_areas',current.id,{archivedAt:env.context.now});
+};
+export const restoreArea:Handler=(env,input,meta)=>{const value=parse(z.object({id:z.string()}).strict(),input),current=get(env,'business_areas',value.id);version(current,meta);return patch(env,'business_areas',current.id,{archivedAt:null});};
+export const updatePreferences:Handler=(env,input,meta)=>{const value=parse(preferenceInput,input),current=get(env,'settings',value.key);version(current,meta);const updated=patch(env,'settings',current.id,{valueJson:JSON.stringify(value.value)});return{key:value.key,value:value.value,version:updated.version};};
+function validateWeek(week:string){if(!/^\d{4}-W\d{2}$/.test(week))business('Informe uma semana ISO válida.');const[year,index]=week.split('-W').map(Number),last=Temporal.PlainDate.from({year,month:12,day:28}).weekOfYear;if(index<1||index>Number(last))business('Informe uma semana ISO existente.');}
+export function weeklyReview(env:Env,week:string):Row{validateWeek(week);return rows(env,'weekly_reviews').find(row=>row.week===week)??{id:week,week,checklist:{},version:0};}
+export const saveWeeklyReview:Handler=(env,input,meta)=>{const value=parse(z.object({week:z.string(),checklist:z.partialRecord(z.enum(['inbox','overdue','waiting','projects','commercial','calendar','finance','focus']),z.boolean())}).strict(),input);validateWeek(value.week);const current=rows(env,'weekly_reviews').find(row=>row.week===value.week);if(current){version(current,meta);return patch(env,'weekly_reviews',current.id,{checklist:value.checklist});}return insert(env,'weekly_reviews',record(env,{week:value.week,checklist:value.checklist},value.week));};
+export const settingsHandlers={createArea,updateArea,archiveArea,restoreArea,updatePreferences,saveWeeklyReview};

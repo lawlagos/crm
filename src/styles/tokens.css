@@ -1,0 +1,32 @@
+/* Generated from DESIGN.md by scripts/design-check.mjs. Do not edit. */
+:root {
+  --color-primary: #146C78;
+  --color-on-primary: #FFFFFF;
+  --color-background: #F3F6F8;
+  --color-surface: #FFFFFF;
+  --color-text: #192C3C;
+  --color-muted: #5B6C7A;
+  --color-border: #CCD7E0;
+  --color-danger: #B42318;
+  --color-success: #206B45;
+  --color-warning: #8A5200;
+  --color-jiu: #4F46A5;
+  --color-agency: #147D74;
+  --color-courses: #9A6700;
+  --color-forum: #5C677D;
+  --radius-default: 10px;
+  --radius-control: 6px;
+  --radius-panel: 12px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-section: 32px;
+  --font-display: Manrope, system-ui, sans-serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+  --height-button: 44px;
+  --height-input: 44px;
+  --height-task-row: 44px;
+  --height-mobile-row: 48px;
+}

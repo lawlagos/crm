@@ -1,0 +1,26 @@
+import { afterEach, expect, test } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { initializeDatabase, openDatabase } from '@/db';
+import { domainHandlers } from '@/features/commands';
+import * as queries from '@/features/queries';
+import { searchAll } from '@/features/overview/search';
+const cleanup: (() => void)[] = []; afterEach(() => cleanup.splice(0).reverse().forEach(fn => fn()));
+test('bootstrap, paginated filters and overview derive facts from the same records', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'central-overview-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
+  await initializeDatabase(dir); const db = openDatabase(dir); cleanup.push(() => db.$client.close());
+  const exports = queries as Record<string, unknown>; expect(exports.getBootstrap).toBeTypeOf('function');
+  const bootstrap = queries.getBootstrap(db); expect(bootstrap.areas).toHaveLength(4);
+  const task = domainHandlers.createTask(db, { title: 'Vencida', areaId: bootstrap.areas[0].id, dueDate: '2026-10-18' }, { operationId: crypto.randomUUID() }) as Record<string, unknown>;
+  const page = queries.readResource('tasks', { id: String(task.id), pageSize: '500' }, db);
+  expect(page).toMatchObject({ total: 1, pageSize: 100, items: [expect.objectContaining({ id: task.id })] });
+  const overview = queries.getTodayOverview(String(bootstrap.areas[0].id), '2026-10-20T02:30:00Z', db);
+  expect(overview.attention.overdueTasks).toBe(1); expect(overview.finance.receivedCents).toBe(0);
+  expect(queries.readResource('tasks', { areaId: '44444444-4444-4444-8444-444444444444' }, db).total).toBe(0);
+  expect(queries.readResource('tasks', { page:'9' }, db)).toMatchObject({ page:1,pageSize:25,total:1 });
+  expect(() => queries.readResource('tasks', { page:'Infinity' },db)).toThrow();
+  expect(() => queries.readResource('tasks', { sort:'DROP TABLE tasks' },db)).toThrow();
+  expect(queries.readResource('tasks',{search:'inexistente'},db).total).toBe(0);
+  expect(searchAll('Vencida',db,'44444444-4444-4444-8444-444444444444').tasks).toEqual([]);
+});

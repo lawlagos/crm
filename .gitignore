@@ -1,0 +1,20 @@
+# Local toolkit checkout and installation evidence
+.tooling/
+
+# Credentials and generated files
+.env
+.env.*
+!.env.example
+.clasprc.json
+.clasp.json
+*private-key*
+node_modules/
+.next/
+.next-test/
+test-results/
+playwright-report/
+*.tsbuildinfo
+dist/
+coverage/
+graphify-out/
+*.log

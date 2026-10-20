@@ -1,0 +1,11 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["src"],
+  "locale": "pt-BR",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Select/Listbox", "Date", "Form", "Scrollbar", "Toast", "CRUD"],
+  "ownership": { "Select/Listbox": "authored", "Date": "authored" },
+  "requiredCommands": ["tokens", "typecheck", "e2e"],
+  "commands": { "tokens": "node scripts/design-check.mjs --check", "typecheck": "npm run typecheck", "e2e": "npm run test:e2e" },
+  "evidence": { "crudFullFlow": "tests/e2e/tasks.spec.ts", "failurePaths": "tests/e2e/shell.spec.ts" }
+}

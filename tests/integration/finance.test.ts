@@ -1,0 +1,44 @@
+import { afterEach, expect, test } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { initializeDatabase, openDatabase } from '@/db';
+import { domainHandlers } from '@/features/commands';
+import { getFinancialSummary } from '@/features/finance/summary';
+const cleanup: (() => void)[] = []; afterEach(() => cleanup.splice(0).reverse().forEach(fn => fn()));
+test('partial payments and reversals are exact and append-only; history protects amount after full reversal', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'central-finance-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
+  await initializeDatabase(dir); const db = openDatabase(dir); cleanup.push(() => db.$client.close());
+  const cmd = (name: string, input: unknown, expectedVersion?: number) => {
+    expect(domainHandlers[name], name).toBeTypeOf('function');
+    return db.$client.transaction(() => domainHandlers[name](db, input, { operationId: crypto.randomUUID(), expectedVersion }))() as Record<string, unknown>;
+  };
+  const receivable = cmd('createReceivable', { areaId: '11111111-1111-4111-8111-111111111111', description: 'Parcela', amountCents: 3334, dueDate: '2026-10-19' });
+  const payment = cmd('recordPayment', { receivableId: receivable.id, amountCents: 2000, effectiveDate: '2026-10-19', method: 'pix' }, 1);
+  expect(payment.balanceCents).toBe(1334);
+  expect(() => cmd('recordPayment', { receivableId: receivable.id, amountCents: 1400, effectiveDate: '2026-10-19', method: 'pix' }, 2)).toThrow(/saldo/i);
+  expect(() => cmd('recordPayment', { receivableId: receivable.id, amountCents: 1, effectiveDate: '2099-01-01', method: 'pix' }, 2)).toThrow(/futur/i);
+  const reversed = cmd('reversePayment', { paymentId: payment.id, amountCents: 500, effectiveDate: '2026-10-20', reason: 'Correção' }, 2);
+  expect(reversed.balanceCents).toBe(1834);
+  expect(() => cmd('cancelReceivable', { id: receivable.id }, 3)).toThrow(/recebimento/i);
+  cmd('reversePayment', { paymentId: payment.id, amountCents: 1500, effectiveDate: '2026-10-20', reason: 'Correção total' }, 3);
+  expect(() => cmd('updateReceivable', { id: receivable.id, amountCents: 9999 }, 4)).toThrow(/histórico/i);
+  expect(() => db.$client.prepare('DELETE FROM payments').run()).toThrow(/imut/i);
+  expect(() => db.$client.prepare('UPDATE payment_reversals SET amount_cents=1').run()).toThrow(/imut/i);
+  expect(cmd('cancelReceivable', { id: receivable.id }, 4)).toMatchObject({ status: 'cancelado', balanceCents: 3334 });
+});
+test('period summary subtracts reversals on their own date and keeps salaries outside business totals', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'central-finance-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
+  await initializeDatabase(dir); const db = openDatabase(dir); cleanup.push(() => db.$client.close());
+  const cmd = (name: string, input: unknown, expectedVersion?: number) => db.$client.transaction(() => domainHandlers[name](db,input,{operationId:crypto.randomUUID(),expectedVersion}))() as Record<string,unknown>;
+  const project=cmd('createProject',{name:'Histórico preservado',areaId:'11111111-1111-4111-8111-111111111111'});
+  const receivable=cmd('createReceivable',{areaId:'11111111-1111-4111-8111-111111111111',projectId:project.id,description:'Consultoria',amountCents:10000,dueDate:'2026-10-20'});
+  const payment=cmd('recordPayment',{receivableId:receivable.id,amountCents:10000,effectiveDate:'2026-09-30',method:'pix'},1);
+  cmd('reversePayment',{paymentId:payment.id,amountCents:2000,effectiveDate:'2026-10-01',reason:'Correção'},2);
+  const salary=cmd('createReceivable',{areaId:'44444444-4444-4444-8444-444444444444',description:'Salário',amountCents:50000,dueDate:'2026-10-01'});
+  cmd('recordPayment',{receivableId:salary.id,amountCents:50000,effectiveDate:'2026-10-01',method:'transferencia'},1);
+  cmd('updateProject',{id:project.id,status:'arquivado'},1);
+  expect(getFinancialSummary({now:'2026-10-20T15:00:00Z'},db)).toMatchObject({receivedCents:-2000,receivableCents:2000,overdueCents:0,conversion:null});
+  expect(getFinancialSummary({now:'2026-10-20T15:00:00Z',scope:'all'},db).receivedCents).toBe(48000);
+  expect(() => cmd('updateProject',{id:project.id,areaId:'22222222-2222-4222-8222-222222222222'},2)).toThrow(/vínculos|vinculados/i);
+});

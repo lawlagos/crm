@@ -1,0 +1,6 @@
+import { z } from 'zod';
+import { assertLocalTime } from '@/lib/time';
+import { dateSchema } from '../shared';
+const timeSchema = z.string().refine(value => { try { assertLocalTime(value); return true; } catch { return false; } }, 'Horário inválido.');
+export const seriesCreate = z.object({ kind: z.enum(['task','event','receivable']), title: z.string().trim().min(1).max(160), areaId: z.string().min(1), startDate: dateSchema, endDate: dateSchema.nullable().optional(), weekday: z.number().int().min(1).max(7).optional(), dayOfMonth: z.number().int().min(1).max(31).optional(), time: timeSchema.default('09:00'), durationMinutes: z.number().int().min(1).max(10080).default(30), payload: z.record(z.string(),z.unknown()).default({}), conflictFingerprint: z.string().max(128).optional() }).strict();
+export const seriesPatch = seriesCreate.pick({ title: true, endDate: true, weekday: true, dayOfMonth: true, time: true, durationMinutes: true, payload: true }).partial().extend({ id: z.string(), time:seriesCreate.shape.time.removeDefault().optional(), durationMinutes:seriesCreate.shape.durationMinutes.removeDefault().optional(), payload:seriesCreate.shape.payload.removeDefault().optional(), previewFingerprint: z.string().max(128).optional() }).strict();

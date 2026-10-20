@@ -1,0 +1,4 @@
+"use client";
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CircleAlert, X } from "lucide-react";
+export function CommandWarnings() { const client = useQueryClient(); const query = useQuery<string[]>({ queryKey: ["command-warnings"], queryFn: skipToken, initialData: [] }); const warnings=query.data??[]; if (!warnings.length) return null; return <aside className="command-warnings" role="alert"><CircleAlert size={18} /><div><strong>Confira seu trabalho iniciado</strong>{warnings.map(message => <p key={message}>{message}</p>)}<span>O aviso orienta sua organização e não bloqueia a tarefa.</span></div><button className="icon-button" aria-label="Dispensar aviso de trabalho iniciado" onClick={() => client.setQueryData(["command-warnings"], [])}><X size={18} /></button></aside>; }

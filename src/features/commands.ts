@@ -1,0 +1,12 @@
+import type { Handler } from './shared';
+import { workHandlers } from './work/service';
+import { createContact, updateContact, archiveContact } from './crm/contacts';
+import { crmHandlers } from './crm/opportunities';
+import { createReceivable, updateReceivable, cancelReceivable } from './finance/receivables';
+import { recordPayment, reversePayment } from './finance/payments';
+import { winOpportunity, reopenOpportunity } from './crm/close-opportunity';
+import { createEvent, updateEvent } from './calendar/service';
+import { createSeries, editFutureSeries, endSeries } from './routines/recurrence';
+import { saveWeeklyReview } from './routines/weekly-review';
+import { createArea, updateArea, archiveArea, restoreArea, updatePreferences } from './settings/service';
+export const domainHandlers: Record<string, Handler> = { ...workHandlers, ...crmHandlers, createContact, updateContact, archiveContact, createReceivable, updateReceivable, cancelReceivable, recordPayment, reversePayment, winOpportunity, reopenOpportunity, createEvent, updateEvent, createSeries, editFutureSeries, endSeries, createArea, updateArea, archiveArea, restoreArea, updatePreferences, saveWeeklyReview };

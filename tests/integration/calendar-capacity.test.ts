@@ -1,0 +1,38 @@
+import { afterEach,expect,test } from 'vitest';
+import { mkdtempSync,rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { Temporal } from 'temporal-polyfill';
+import { initializeDatabase,openDatabase } from '@/db';
+import { localDateTimeToInstant,todayInZone } from '@/lib/time';
+import { getAvailability } from '@/features/calendar/capacity';
+
+const cleanup:(()=>void)[]=[];
+afterEach(()=>cleanup.splice(0).reverse().forEach(fn=>fn()));
+test('availability unions windows, all-area events and forum hours over two weeks without writing',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'central-capacity-'));cleanup.push(()=>rmSync(dir,{recursive:true,force:true}));
+  await initializeDatabase(dir);const db=openDatabase(dir);cleanup.push(()=>db.$client.close());
+  const weekdays=[1,2,3,4,5,6,7];
+  db.$client.prepare("UPDATE settings SET value_json=? WHERE key='availabilityWindows'").run(JSON.stringify([{weekdays,start:'08:00',end:'10:00'},{weekdays,start:'09:00',end:'12:00'},{weekdays,start:'18:00',end:'20:00'}]));
+  const event=db.$client.prepare('INSERT INTO calendar_events(id,title,kind,area_id,starts_at,ends_at,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)');
+  const add=(date:string,start:string,end:string,areaId:string,status='agendado')=>event.run(crypto.randomUUID(),'Compromisso','bloqueio',areaId,new Date(localDateTimeToInstant(date,start)).toISOString(),new Date(localDateTimeToInstant(date,end)).toISOString(),status,'2026-10-19T12:00:00.000Z','2026-10-19T12:00:00.000Z');
+  add('2026-10-19','18:00','19:00','11111111-1111-4111-8111-111111111111');
+  add('2026-10-19','18:30','19:30','22222222-2222-4222-8222-222222222222');
+  add('2026-10-19','19:30','20:00','33333333-3333-4333-8333-333333333333','cancelado');
+  add('2026-10-20','10:00','11:00','11111111-1111-4111-8111-111111111111');
+  add('2026-10-21','13:00','14:00','22222222-2222-4222-8222-222222222222');
+  add('2026-10-26','17:00','18:30','44444444-4444-4444-8444-444444444444');
+  add('2026-11-02','18:00','20:00','33333333-3333-4333-8333-333333333333');
+  const changes=()=>db.$client.prepare('SELECT total_changes() n').get();const before=changes();
+  const result=getAvailability(db,{from:'2026-10-19',to:'2026-11-01'});
+  expect(result).toMatchObject({from:'2026-10-19',to:'2026-11-01',configuredMinutes:5040,freeMinutes:3120});
+  expect(result.days).toHaveLength(14);
+  expect(result.days.filter(day=>['2026-10-19','2026-10-20','2026-10-24','2026-10-26'].includes(day.date))).toEqual([{date:'2026-10-19',configuredMinutes:360,freeMinutes:90},{date:'2026-10-20',configuredMinutes:360,freeMinutes:180},{date:'2026-10-24',configuredMinutes:360,freeMinutes:360},{date:'2026-10-26',configuredMinutes:360,freeMinutes:150}]);
+  const today=todayInZone(new Date().toISOString());
+  expect(getAvailability(db)).toMatchObject({from:today,to:Temporal.PlainDate.from(today).add({days:6}).toString(),days:Array.from({length:7},()=>expect.any(Object))});
+  expect(getAvailability(db,{from:'2026-10-19',to:Temporal.PlainDate.from('2026-10-19').add({days:92}).toString()}).days).toHaveLength(93);
+  expect(()=>getAvailability(db,{from:'2026-10-19',to:Temporal.PlainDate.from('2026-10-19').add({days:93}).toString()})).toThrow(/93/i);
+  expect(()=>getAvailability(db,{from:'2026-10-20',to:'2026-10-19'})).toThrow();
+  expect(()=>getAvailability(db,{from:'2026-02-30'})).toThrow();
+  expect(changes()).toEqual(before);
+});

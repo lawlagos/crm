@@ -1,0 +1,17 @@
+﻿"use client";
+
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, Search, X } from "lucide-react";
+import { request } from "@/lib/query-client";
+import { Button, EmptyState, ErrorState, LoadingState, Modal } from "./primitives";
+type Contact = { id: string; name: string; email?: string; phone?: string };
+export function ContactCombobox({ id, value, onChange, disabled, invalid, describedBy }: { id: string; value: string; onChange: (value: string) => void; disabled?: boolean; invalid?: boolean; describedBy?: string }) {
+  const [open, setOpen] = useState(false); const [text, setText] = useState(""); const [term, setTerm] = useState(""); const [composing, setComposing] = useState(false);
+  useEffect(() => { if (composing) return; const timer = setTimeout(() => setTerm(text.trim()), 300); return () => clearTimeout(timer); }, [text, composing]);
+  const selected = useQuery({ queryKey: ["contacts", value], queryFn: ({ signal }) => request<Contact>(`/api/contacts/${value}`, { signal }), enabled: !!value });
+  const query = useQuery({ queryKey: ["contacts", "picker", term], queryFn: ({ signal }) => term ? request<{ items: Contact[] }>("/api/search", { method: "POST", body: JSON.stringify({ resource: "contacts", query: term }), signal }) : request<{ items: Contact[] }>("/api/contacts?archived=false&pageSize=25", { signal }), enabled: open });
+  return <><button type="button" id={id} className="select-trigger" onClick={() => setOpen(true)} disabled={disabled} role="combobox" aria-expanded={open} aria-controls={open ? `${id}-options` : undefined} aria-haspopup="dialog" aria-invalid={invalid} data-invalid={invalid} aria-describedby={describedBy}><span>{selected.data?.name ?? (value ? "Carregando cliente…" : "Escolha um cliente")}</span><Search size={16} /></button><Modal id={`${id}-options`} open={open} onOpenChange={setOpen} title="Escolher cliente" description="Busque por nome, telefone ou e-mail nos seus registros."><form noValidate className="search-form" onSubmit={event => { event.preventDefault(); if (!composing) setTerm(text.trim()); }}><Search size={19} /><label className="sr-only" htmlFor={`${id}-search`}>Buscar cliente</label><input id={`${id}-search`} value={text} onChange={event => { setText(event.target.value); if (!event.target.value) setTerm(""); }} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} autoComplete="off" placeholder="Nome, telefone ou e-mail" />{text && <button type="button" className="icon-button" aria-label="Limpar busca de cliente" onClick={() => { setText(""); setTerm(""); }}><X size={17} /></button>}</form><div className="contact-options">{query.isPending ? <LoadingState /> : query.isError ? <ErrorState retry={() => query.refetch()} /> : !query.data.items.length ? <EmptyState compact title="Nenhum cliente encontrado" description="Crie o cadastro em Clientes antes de vincular a oportunidade." /> : query.data.items.map(contact => <button type="button" key={contact.id} onClick={() => { onChange(contact.id); setOpen(false); }}><span><strong>{contact.name}</strong><small>{contact.email || contact.phone || "Sem telefone ou e-mail"}</small></span>{contact.id === value && <Check size={18} />}</button>)}</div><div className="dialog-actions"><Button variant="outline" type="button" onClick={() => { onChange(""); setOpen(false); }}>Remover vínculo</Button><Button type="button" variant="outline" onClick={() => setOpen(false)}>Voltar</Button></div></Modal></>;
+}
+
+
