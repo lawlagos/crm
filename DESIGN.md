@@ -181,4 +181,8 @@ Feedback visual em até 150ms quando há resposta local; animação discreta de 
 
 ## Verificação
 
+### Tarefas e leitura do mês — 22/10/2026
+
+Pedido expresso: retirar tarefas concluídas da lista principal e mostrar cadastros e conclusões do mês. Escolha do projeto: filtro inicial Em aberto, acesso a Concluídas no seletor compartilhado e faixa compacta com dois totais. Os totais respeitam a frente selecionada, independem dos filtros da lista e usam o mês civil de São Paulo. Conclusões usam completedAt, inclusive de tarefas criadas antes; reabertas deixam de contar. Não há percentual porque cadastros e conclusões podem pertencer a grupos diferentes.
+
 Fontes Manrope e Source Sans 3 são locais. Telas renderizadas são conferidas em 390/768/1366px; testes verificam rascunhos, teclado, popups e ausência de overflow. Resultados e limitações estão em [implementação](docs/reviews/2026-10-20-implementacao.md). Emulação não comprova toque ou instalação em aparelho físico.

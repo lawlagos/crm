@@ -3,11 +3,12 @@ import{mkdirSync}from'node:fs';
 import{createInitialState,executeCommand,queryApi,type DomainState,type Row}from'../../cloud/domain';
 import{createHandler,type CloudRuntime}from'../../cloud/server/core';
 const jiu='11111111-1111-4111-8111-111111111111',endpoint='https://script.google.com/macros/s/task-checklist-test/exec';
-async function fixture(page:Page,checked=0){
+async function fixture(page:Page,checked=0,extra=0){
   const context={now:new Date().toISOString(),uuid:()=>crypto.randomUUID()};let state:DomainState=createInitialState(context.now);state.tables.mutation_receipts=[];
   const seed=(input:unknown)=>executeCommand(state,'createTask',input,{operationId:crypto.randomUUID()},context)as Row;
   const task=seed({title:'Preparar entrega de teste',areaId:jiu,description:'Checklist isolado para validar dez etapas de uma entrega.',checklist:Array.from({length:10},(_,index)=>({id:`step-${index+1}`,text:`Etapa ${index+1}`,done:index<checked}))});
   const inbox=seed({title:'Captura sem frente'});state.tables.tasks.find(row=>row.id===task.id)!.focusDate=context.now.slice(0,10);
+  for(let index=0;index<extra;index++)seed({title:`Tarefa adicional ${index}`,areaId:jiu});
   const session={session:'fixture-task-checklist-session-0000000000000000000000',email:'lawlagos@gmail.com',expiresAt:'2099-10-20T12:00:00Z'};
   const runtime:CloudRuntime={now:()=>context.now,uuid:context.uuid,randomToken:()=>session.session,hash:value=>value,clientId:'fixture',verifyToken:()=>({}),getSession:key=>key===session.session?{...session,sub:'fixture'}:null,putSession:()=>{},deleteSession:()=>{},transaction:work=>{const draft=structuredClone(state),result=work(draft);state=draft;return result;},read:()=>structuredClone(state)};
   const handle=createHandler(runtime,{executeCommand,queryApi});const operations:{command:string;input:Row;meta:Row}[]=[];let lose=false;
@@ -31,7 +32,7 @@ test('marca diretamente e mostra dez por cento por item em ficha, lista, quadro 
 });
 test('último item não conclui e conclusão manual preserva itens e avisa pendências',async({page})=>{
   const f=await fixture(page,9);await page.goto(`./#/tarefas/${f.task.id}`);await page.getByRole('checkbox',{name:'Etapa 10',exact:true}).click();await expect(page.getByText('10 de 10 concluídos',{exact:true})).toBeVisible();expect(f.getTask().status).toBe('a_fazer');
-  await page.getByRole('checkbox',{name:'Etapa 10',exact:true}).click();await page.getByRole('link',{name:'Todas as tarefas',exact:true}).click();await page.getByRole('button',{name:'Concluir Preparar entrega de teste',exact:true}).click();await expect(page.getByText(/Concluída manualmente · 1 item pendente/)).toBeVisible();
+  await page.getByRole('checkbox',{name:'Etapa 10',exact:true}).click();await page.getByRole('link',{name:'Todas as tarefas',exact:true}).click();await page.getByRole('button',{name:'Concluir Preparar entrega de teste',exact:true}).click();await expect(page.getByRole('link',{name:'Preparar entrega de teste',exact:true})).not.toBeVisible();await page.getByRole('combobox',{name:'Filtrar por status'}).click();await page.getByRole('option',{name:'Concluídas',exact:true}).click();await expect(page.getByText(/Concluída manualmente · 1 item pendente/)).toBeVisible();
   await page.getByRole('link',{name:'Preparar entrega de teste',exact:true}).click();await page.getByRole('checkbox',{name:'Etapa 10',exact:true}).click();await expect(page.getByText('10 de 10 concluídos',{exact:true})).toBeVisible();expect(f.getTask().status).toBe('concluida');
 });
 test('conflito reaplica somente o item pretendido na versão atual',async({page})=>{
@@ -47,5 +48,35 @@ test('resposta perdida verifica a mesma operação sem confirmar progresso antes
 test('sem rede não marca nem enfileira e captura exige escolher a frente para concluir',async({page,context})=>{
   const f=await fixture(page);await page.goto(`./#/tarefas/${f.task.id}`);await expect(page.getByRole('checkbox',{name:'Etapa 1',exact:true})).toBeVisible();await context.setOffline(true);await expect(page.getByRole('checkbox',{name:'Etapa 1',exact:true})).toBeDisabled();await expect(page.getByText(/Conecte-se para marcar os itens/)).toBeVisible();await context.setOffline(false);
   await page.getByRole('link',{name:'Todas as tarefas',exact:true}).click();await page.getByRole('button',{name:'Concluir Captura sem frente',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Mover para concluída'});await expect(dialog).toBeVisible();await dialog.getByRole('button',{name:'Mover tarefa',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('frente');await dialog.getByRole('combobox',{name:'Frente',exact:true}).click();await page.getByRole('option',{name:'Jiu-jítsu',exact:true}).click();await dialog.getByRole('button',{name:'Mover tarefa',exact:true}).click();await expect(dialog).not.toBeVisible();expect(f.operations).toHaveLength(1);
+  await expect(page.getByRole('link',{name:'Captura sem frente',exact:true})).not.toBeVisible();await page.getByRole('combobox',{name:'Filtrar por status'}).click();await page.getByRole('option',{name:'Concluídas',exact:true}).click();
   const row=page.locator('.task-row').filter({has:page.getByRole('link',{name:'Captura sem frente',exact:true})});await expect(row.getByText('1 de 1 concluído',{exact:true})).toBeVisible();
+});
+
+
+test('separa concluídas e atualiza totais mensais ao concluir e reabrir',async({page},testInfo)=>{
+  await fixture(page);await page.goto('./#/tarefas');
+  const summary=page.getByRole('region',{name:'Progresso do mês'});
+  await expect(summary.locator('dd')).toHaveText(['2','0']);
+  await page.getByRole('button',{name:'Concluir Preparar entrega de teste',exact:true}).click();
+  await expect(page.getByRole('link',{name:'Preparar entrega de teste',exact:true})).not.toBeVisible();
+  await expect(summary.locator('dd')).toHaveText(['2','1']);
+  await page.getByRole('combobox',{name:'Filtrar por status'}).click();await page.getByRole('option',{name:'Concluídas',exact:true}).click();
+  await expect(page.getByRole('link',{name:'Preparar entrega de teste',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Reabrir Preparar entrega de teste',exact:true}).click();
+  await expect(summary.locator('dd')).toHaveText(['2','0']);
+  await expect(page.getByRole('link',{name:'Preparar entrega de teste',exact:true})).not.toBeVisible();
+  await page.getByRole('combobox',{name:'Filtrar por status'}).click();await page.getByRole('option',{name:'Em aberto',exact:true}).click();
+  await expect(page.getByRole('link',{name:'Preparar entrega de teste',exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  mkdirSync('.tooling/implementation/task-month',{recursive:true});await page.screenshot({path:`.tooling/implementation/task-month/${testInfo.project.name}.png`,fullPage:true});
+});
+
+test('totais percorrem todas as páginas e respeitam a frente',async({page})=>{
+  await fixture(page,0,100);await page.goto('./#/tarefas');
+  const summary=page.getByRole('region',{name:'Progresso do mês'});
+  await expect(summary.locator('dd')).toHaveText(['102','0']);
+  await page.goto(`./#/tarefas?areaId=${jiu}`);
+  await expect(summary.locator('dd')).toHaveText(['101','0']);
+  await page.goto('./#/tarefas?areaId=22222222-2222-4222-8222-222222222222');
+  await expect(summary.locator('dd')).toHaveText(['0','0']);
 });

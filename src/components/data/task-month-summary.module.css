@@ -1,0 +1,7 @@
+.summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-lg) var(--space-section); padding: var(--space-xl); margin-bottom: var(--space-xl); }
+.summary h2 { font-size: 16px; }
+.summary p { color: var(--color-muted); font-size: 14px; }
+.summary dl { display: flex; flex-wrap: wrap; gap: var(--space-lg) var(--space-section); margin: 0; }
+.summary dt { color: var(--color-muted); font-size: 14px; }
+.summary dd { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-primary); }
+.note { flex-basis: 100%; }

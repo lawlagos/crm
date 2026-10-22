@@ -1,5 +1,7 @@
 # Central — planejamento de ponta a ponta
 
+**Atualização de 22/10/2026:** tarefas agora abrem em Em aberto, com acesso às concluídas e resumo mensal de cadastros/conclusões por frente. Verificações e limites em [revisão de tarefas](docs/reviews/2026-10-22-tarefas.md). Os aceites pendentes continuam sendo instalação no telefone, sincronização entre aparelhos e entrega real de notificações.
+
 **Nova direção confirmada em 20/10/2026:** publicado em `https://lawlagos.github.io/crm/`, com Google Sheets privado, Apps Script e login exclusivo de `lawlagos@gmail.com`. Configuração inicial concluída pelo proprietário às 16:24:07, com abas conferidas e acesso anônimo recusado. Login e salvamento real confirmados pelo usuário e por leitura pontual de tarefa/recibo na planilha. Sincronização entre aparelhos e entrega de notificações ainda pendentes. Esta decisão substitui o destino exclusivamente local descrito abaixo. Consulte o [plano de publicação](docs/superpowers/plans/2026-10-20-central-publicacao.md) e o [guia da nuvem](docs/cloud-deployment.md). A versão local permanece disponível.
 
 Criado em 19/10/2026; atualizado em 20/10/2026. Status: aplicação implementada, com testes locais e revisão visual; aceite em telefone físico pendente. Evidências e limites no [relatório de implementação](docs/reviews/2026-10-20-implementacao.md).
@@ -48,7 +50,7 @@ M1–M3 foram implementados em base de demonstração isolada. M4 possui backup/
 
 As duas rodadas foram realizadas em 20/10/2026 por revisores diferentes. Foram corrigidos os contratos de parcelas/reabertura de venda, vínculos entre agenda e tarefas, identidade das recorrências e ordem das tabelas no banco. Configurações ganhou tarefa responsável; design e documentação de instalação foram ajustados. A rechecagem final não encontrou bloqueio documental remanescente. Achados, correções e limites estão no [registro das revisões](docs/reviews/2026-10-19-planejamento.md).
 
-Próxima etapa de aceite: experimentar a rotina e validar HTTPS/instalação no telefone real seguindo [primeiro uso](docs/onboarding.md). Não foi publicado nenhum site nem criada integração externa.
+Próxima etapa de aceite: experimentar a rotina, confirmar sincronização entre aparelhos, instalação no telefone real e entrega de notificações. O site e a integração Google já foram publicados, conforme o registro de 20/10 no início deste documento.
 
 ## Documentação completa
 

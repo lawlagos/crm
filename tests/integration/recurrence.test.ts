@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -6,7 +6,7 @@ import { initializeDatabase, openDatabase } from '@/db';
 import { domainHandlers } from '@/features/commands';
 import { runCommand } from '@/lib/commands';
 import * as recurrence from '@/features/routines/materialize';
-const cleanup: (() => void)[] = []; afterEach(() => cleanup.splice(0).reverse().forEach(fn => fn()));
+const cleanup: (() => void)[] = []; afterEach(() => { cleanup.splice(0).reverse().forEach(fn => fn()); vi.useRealTimers(); });
 test('monthly occurrences keep original month-day anchor and repeated jobs never create payments or duplicate positions', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'central-recurrence-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
   await initializeDatabase(dir); const db = openDatabase(dir); cleanup.push(() => db.$client.close());
@@ -21,6 +21,8 @@ test('monthly occurrences keep original month-day anchor and repeated jobs never
   expect(db.$client.prepare('SELECT count(*) n FROM payments').get()).toEqual({ n: 0 });
 });
 test('editing weekly series preserves an individual move and identity while reconciling future positions', async () => {
+  // The expected horizon belongs to this scenario, not the day the suite runs.
+  vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-20T15:00:00Z'));
   const dir = mkdtempSync(join(tmpdir(), 'central-recurrence-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true }));
   await initializeDatabase(dir); const db = openDatabase(dir); cleanup.push(() => db.$client.close());
   const cmd = (name: string, input: unknown, expectedVersion?: number) => {
