@@ -1,6 +1,6 @@
 ﻿import { Component, lazy, Suspense, useEffect, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Providers, useDraft } from '../src/components/layout/providers';
+import { useDraft } from '../src/components/layout/providers';
 import { AppShell } from '../src/components/layout/app-shell';
 import { OverviewPage } from '../src/components/data/overview';
 import { TasksPage } from '../src/components/data/task-list';
@@ -31,6 +31,6 @@ function Routes() {
 function MissingRoute() { return <EmptyState title="Esta página não foi encontrada" description="Volte ao seu espaço de trabalho para continuar." action={<Link href="/" className="button button-primary">Voltar para Hoje</Link>} />; }
 class RouteBoundary extends Component<{ children: ReactNode }, { failed: boolean }> { state = { failed: false }; static getDerivedStateFromError() { return { failed: true }; } render() { return this.state.failed ? <ErrorState message="A tela não pôde ser carregada. Os registros salvos permanecem no seu espaço privado." retry={() => this.setState({ failed: false })} /> : this.props.children; } }
 function ClearSessionCache() { const client = useQueryClient(); useEffect(() => () => { void client.cancelQueries(); client.clear(); }, [client]); return null; }
-export default function PrivateApp() { const path = useRoute().split("?")[0]; return <Providers><ClearSessionCache /><RouterDraftGuard /><AppShell sessionControls={<AccountBar />}><RouteBoundary key={path}><Suspense fallback={<LoadingState />}><Routes /></Suspense></RouteBoundary></AppShell></Providers>; }
+export default function PrivateApp() { const path = useRoute().split("?")[0]; return <><ClearSessionCache /><RouterDraftGuard /><AppShell sessionControls={<AccountBar />}><RouteBoundary key={path}><Suspense fallback={<LoadingState />}><Routes /></Suspense></RouteBoundary></AppShell></>; }
 
 

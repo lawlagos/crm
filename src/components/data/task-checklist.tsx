@@ -9,18 +9,20 @@ import { useDraft } from "../layout/providers";
 import { Button } from "../ui/primitives";
 import type { Task } from "./models";
 import { TaskProgress } from "./task-progress";
+import { useTaskMovePending } from "./task-move-queue";
 import styles from "./task-progress.module.css";
 
 type Attempt = { id: string; done: boolean; text: string };
 export function TaskChecklist({ task, onEditingChange }: { task: Task; onEditingChange?: (editing: boolean) => void }) {
+  const queued = useTaskMovePending(task.id, task.version);
   const { run, pending, error, clearError } = useCommand();
   const client = useQueryClient(); const online = useOnlineState(); const heading = useId(); const { setDirty } = useDraft();
   const [attempt, setAttempt] = useState<Attempt | null>(null); const [working, setWorking] = useState(false); const [saved, setSaved] = useState(false); const [recoveryError, setRecoveryError] = useState(""); const busy = useRef(false);
   useEffect(() => { onEditingChange?.(working || attempt !== null); }, [working, attempt, onEditingChange]);
   useEffect(() => () => { setDirty(false); onEditingChange?.(false); }, [setDirty, onEditingChange]);
-  const frozen = working || pending || !online || !!error?.uncertain || error?.code === "CONFLICT" || !!recoveryError;
+  const frozen = queued || working || pending || !online || !!error?.uncertain || error?.code === "CONFLICT" || !!recoveryError;
   async function save(change: Attempt, mode: "current" | "refresh" | "replay" = "current") {
-    if (busy.current || !online) return;
+    if (busy.current || !online || queued) return;
     busy.current = true; setWorking(true); setSaved(false); setAttempt(change); setRecoveryError(""); setDirty(true);
     let submitted = false;
     try {
@@ -40,7 +42,7 @@ export function TaskChecklist({ task, onEditingChange }: { task: Task; onEditing
     {!!task.checklist?.length && <fieldset className={styles.items} disabled={frozen} aria-label="Itens da tarefa">{task.checklist.map(item => <label className={`${styles.item} ${item.done ? styles.itemDone : ""}`} key={item.id}>
       <input type="checkbox" checked={item.done} onChange={event => save({ id: item.id, done: event.target.checked, text: item.text })} /><span className={styles.itemText}>{item.text}</span>{working && attempt?.id === item.id && <LoaderCircle className={`${styles.savingItem} spin`} aria-hidden="true" />}
     </label>)}</fieldset>}
-    <p className={styles.saveStatus} role="status">{!online ? "Conecte-se para marcar os itens. Nada será enviado em segundo plano." : working ? "Salvando marcação…" : saved ? "Marcação salva." : !task.checklist?.length ? "Sem checklist, o progresso acompanha a conclusão manual da tarefa." : !attempt ? "Marque os itens conforme avançar." : ""}</p>
+    <p className={styles.saveStatus} role="status">{queued ? "Movimento pendente. Aguarde a fila antes de marcar os itens." : !online ? "Conecte-se para marcar os itens. Nada será enviado em segundo plano." : working ? "Salvando marcação…" : saved ? "Marcação salva." : !task.checklist?.length ? "Sem checklist, o progresso acompanha a conclusão manual da tarefa." : !attempt ? "Marque os itens conforme avançar." : ""}</p>
     {(error || recoveryError) && <div className={styles.error} role="alert"><p>{recoveryError || (error?.code === "CONFLICT" ? "Este checklist mudou em outra tela. Sua marcação ainda não foi salva." : error?.message)}</p>
       {attempt && <p>Você tentou {attempt.done ? "marcar" : "desmarcar"}: {attempt.text}.</p>}
       <div className={styles.recoveryActions}>{attempt && <Button type="button" variant="outline" busy={working} disabled={!online} onClick={() => save(attempt, error?.uncertain ? "replay" : "refresh")}>{error?.uncertain ? "Verificar resultado" : "Atualizar e tentar novamente"}</Button>}{!error?.uncertain && <Button type="button" variant="ghost" disabled={working} onClick={() => { clearError(); setRecoveryError(""); setAttempt(null); setDirty(false); }}>Descartar marcação</Button>}</div>

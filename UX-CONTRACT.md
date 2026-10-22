@@ -67,6 +67,15 @@ Botões **Salvar**, **Cancelar** e **Voltar** têm resultado previsível. Cancel
 
 ## Estados obrigatórios
 
+### Movimento de tarefas em segundo plano
+
+- Confirmar Mover tarefa valida os campos, fecha o modal e coloca a operação em fila FIFO por aba. A fila vive no provider compartilhado, acima das rotas e, na versão web, acima do gate de autenticação.
+- Três tentativas no total para falhas transitórias, com intervalos de um e dois segundos. Mesmo payload, versão esperada e operationId em todas as tentativas; recibos do servidor evitam duplicação. Conflito, validação e permissão não entram em repetição automática.
+- A confirmação do servidor determina Salvo; atualização das consultas ocorre depois sem bloquear o próximo envio. Cartões mantêm o estado canônico e sinalizam pendência. A mesma tarefa não aceita outro movimento, edição ou marcação enquanto a fila estiver pendente.
+- Falha definitiva mostra a mensagem e permite dispensar. Resultado incerto permanece como Não confirmado, oferece Verificar resultado e nunca cria uma nova operação para a mesma tentativa. Falha de uma tarefa não impede outras tarefas independentes.
+- Perda de sessão pausa a fila em memória; entrar novamente retoma com a mesma identidade. A tela de login não exibe os dados da fila. A fila não persiste em disco e não executa com a aba fechada; beforeunload avisa com pendências, e sair/atualizar a PWA aguarda resolução. Navegação interna permanece livre.
+- Não aceitar novos movimentos sem conexão. Se a conexão cair após o aceite, as tentativas são limitadas e a falha fica visível para recuperação. Checklist e operações financeiras mantêm seus fluxos anteriores.
+
 | Estado | Tratamento |
 | --- | --- |
 | Carregamento inicial | indicador estável com texto “Carregando…” |

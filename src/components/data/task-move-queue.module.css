@@ -1,0 +1,16 @@
+.panel { margin: var(--space-lg) var(--space-section) 0; border: 1px solid var(--color-border); border-radius: var(--radius-panel); background: var(--color-surface); }
+.heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-md) var(--space-lg); }
+.heading h2 { font-size: 16px; }
+.heading p, .hint, .content p { font-size: 14px; color: var(--color-muted); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.hint { padding: 0 var(--space-lg) var(--space-md); }
+.list { list-style: none; margin: 0; padding: 0 var(--space-lg); max-height: 240px; overflow: auto; }
+.item { display: flex; gap: var(--space-md); padding: var(--space-md) 0; border-top: 1px solid var(--color-border); }
+.content { min-width: 0; flex: 1; }
+.content a { overflow-wrap: anywhere; font-weight: 600; }
+.content a:hover { text-decoration: underline; }
+.stateIcon { color: var(--color-primary); padding-top: var(--space-xs); }
+.errorIcon { color: var(--color-danger); padding-top: var(--space-xs); }
+.failure { margin-top: var(--space-sm); }
+.failure p { color: var(--color-danger); margin-bottom: var(--space-sm); }
+@media (max-width: 767px) { .panel { margin: var(--space-lg) var(--space-lg) 0; } .list { max-height: 180px; } }

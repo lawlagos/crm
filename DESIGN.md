@@ -181,6 +181,10 @@ Feedback visual em até 150ms quando há resposta local; animação discreta de 
 
 ## Verificação
 
+### Fila de movimentos — 22/10/2026
+
+Pedido expresso: fechar a janela de movimento imediatamente, continuar navegando e tentar novamente duas vezes quando o servidor falhar. Escolha do projeto: painel recolhível compartilhado acima do conteúdo, com título da tarefa, destino, estado e tentativa; sem sobrepor navegação ou simular percentual. Paleta e controles existentes. O cartão conserva o estado confirmado e indica movimento pendente até a resposta do servidor. Erros ficam na fila; sucesso não exige modal nem rouba foco. O painel permanece entre telas e adapta sua lista rolável ao celular.
+
 ### Tarefas e leitura do mês — 22/10/2026
 
 Pedido expresso: retirar tarefas concluídas da lista principal e mostrar cadastros e conclusões do mês. Escolha do projeto: filtro inicial Em aberto, acesso a Concluídas no seletor compartilhado e faixa compacta com dois totais. Os totais respeitam a frente selecionada, independem dos filtros da lista e usam o mês civil de São Paulo. Conclusões usam completedAt, inclusive de tarefas criadas antes; reabertas deixam de contar. Não há percentual porque cadastros e conclusões podem pertencer a grupos diferentes.

@@ -27,6 +27,7 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
   const timeout = setTimeout(() => controller.abort(), isCloudMode() ? 45_000 : 12_000);
   const abort = () => controller.abort();
   options?.signal?.addEventListener("abort", abort, { once: true });
+  if (options?.signal?.aborted) controller.abort();
   try {
     const response = await requestRaw(url, { ...options, headers: { "Content-Type": "application/json", ...options?.headers }, signal: controller.signal });
     const body = await response.json();

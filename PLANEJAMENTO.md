@@ -1,5 +1,7 @@
 # Central — planejamento de ponta a ponta
 
+**Experiência de uso em 22/10/2026:** movimentos de tarefas agora usam fila em segundo plano, com navegação livre, três tentativas totais para falhas transitórias e retomada após login. Evidências e limites em [fila de tarefas](docs/reviews/2026-10-22-fila-tarefas.md).
+
 **Atualização de 22/10/2026:** tarefas agora abrem em Em aberto, com acesso às concluídas e resumo mensal de cadastros/conclusões por frente. Verificações e limites em [revisão de tarefas](docs/reviews/2026-10-22-tarefas.md). Os aceites pendentes continuam sendo instalação no telefone, sincronização entre aparelhos e entrega real de notificações.
 
 **Nova direção confirmada em 20/10/2026:** publicado em `https://lawlagos.github.io/crm/`, com Google Sheets privado, Apps Script e login exclusivo de `lawlagos@gmail.com`. Configuração inicial concluída pelo proprietário às 16:24:07, com abas conferidas e acesso anônimo recusado. Login e salvamento real confirmados pelo usuário e por leitura pontual de tarefa/recibo na planilha. Sincronização entre aparelhos e entrega de notificações ainda pendentes. Esta decisão substitui o destino exclusivamente local descrito abaixo. Consulte o [plano de publicação](docs/superpowers/plans/2026-10-20-central-publicacao.md) e o [guia da nuvem](docs/cloud-deployment.md). A versão local permanece disponível.
